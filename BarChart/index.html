@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" content="width=device-width, initial-scale=1">
+        <style>
+
+            .bar {
+                /*fill: rgb(70, 130, 180, 1); */           
+            }
+
+            .axis--x path {
+                display: none;
+                stroke: grey;    
+            }
+            
+            rect{
+                shape-rendering: crispEdges;
+            }
+
+        </style>
+    </head>
+    <body>
+        <h2>Bar Chart with Arbitrary Data</h2>
+        
+        <svg class="chart" width="1060" height="500"></svg>
+        <!--div class="button">
+            <button class="sort-toggle">Toggle Sort</button>
+        </div-->
+        
+        
+        <script src="https://d3js.org/d3.v5.min.js"></script>
+        <script src ="index.js"></script>
+    </body>    
+</html>
