@@ -4,11 +4,12 @@
         <meta charset="utf-8" content="width=device-width, initial-scale=1">
         <style>
 
-            .bar {
-                /*fill: rgb(70, 130, 180, 1); */           
-            }
-
             .axis--x path {
+                display: none;
+                stroke: grey;    
+            }
+            
+            .axis--y path {
                 display: none;
                 stroke: grey;    
             }
@@ -16,12 +17,50 @@
             rect{
                 shape-rendering: crispEdges;
             }
+            
+            #tooltip {
+                position: absolute;
+                width: auto;
+                height: auto;
+                padding: 10px;
+                background-color: white;
+                -webkit-border-radius: 10px;
+                -moz-border-radius: 10px;
+                border-radius: 10px;
+                -webkit-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+                -moz-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+                box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+                pointer-events: none;
+            }
+
+            #tooltip p {
+                margin: 0;
+                font-family: Futura;
+                font-size: 16px;
+                line-height: 20px;
+            }
+            
+            #tooltip h1 {
+                text-align:  center;
+                margin: 0;
+                font-family: Futura;
+                font-size: 20px;
+                line-height: 20px;
+            }
 
         </style>
     </head>
     <body>
         <h2>Bar Chart with Arbitrary Data</h2>
-        
+        <div id="tooltip" style="opacity: 0;">
+            <h1><span id="title"></span></h1>
+            <hr>
+            <p><strong><span id="category"></span></strong></p>
+            <p><span id="value"></span></p>
+            <br>
+            <p><strong><span>Total</span></strong></p>
+            <p><span id="totalValue"></span></p>
+        </div>
         <svg class="chart" width="1060" height="500"></svg>
         <!--div class="button">
             <button class="sort-toggle">Toggle Sort</button>
@@ -29,6 +68,29 @@
         
         
         <script src="https://d3js.org/d3.v5.min.js"></script>
-        <script src ="index.js"></script>
+        <script src ="stackedBarChart.js"></script>
+        
+        <script>
+            var margin = {top: 20, right: 20, bottom: 30, left: 40};
+            var svg = d3.select(".chart");
+            var width = +svg.attr("width") - margin.left - margin.right;
+            var height = +svg.attr("height") - margin.top - margin.bottom;        
+
+            svg = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+            var params = {
+                fileName: "data.csv",
+                width: width,
+                height: height,
+                margin: margin,
+                colors: ["#d0d1e6", "#a6bddb", "#67a9cf", "#3690c0", "#02818a", "#016c59", "#014636"],
+                //startColor: "green",
+                //endColor: "orange",
+                //categoryLabels: ["One", "Two", "Three", "Four", "Five", "Six", "Seven"],
+                //highlightColor: "orange",
+            };
+
+            drawStackedBarChart(params);
+        </script>
     </body>    
 </html>

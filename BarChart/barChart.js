@@ -1,6 +1,7 @@
 /*global d3*/
 /*global console*/
 /*eslint no-console: "off"*/
+/*eslint no-unused-vars: off*/
 var svg = d3.select(".chart");
 var margin = {top: 20, right: 20, bottom: 30, left: 40};
 var width = +svg.attr("width") - margin.left - margin.right;
