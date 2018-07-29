@@ -3,8 +3,28 @@
 /*global console*/
 /*eslint no-console: "off"*/
 /*eslint no-unused-vars: "off"*/
-        
+var margin = {top: 20, right: 20, bottom: 30, left: 40};
+var svg = d3.select("#chart");
+var width = +svg.attr("width") - margin.left - margin.right;
+var height = +svg.attr("height") - margin.top - margin.bottom;        
 
+
+
+svg = svg.append("g").attr("transform", "translate(" + margin.left/2 + "," + margin.top + ")");
+
+var params = {
+    fileName: "data.csv",
+    width: width,
+    height: height,
+    margin: margin,
+    colors: ["#d0d1e6", "#a6bddb", "#67a9cf", "#3690c0", "#02818a", "#016c59", "#014636"],
+    //startColor: "#800000",
+    //endColor: "orange",
+    //categoryLabels: ["One", "Two", "Three", "Four", "Five", "Six", "Seven"],
+    highlightColor: "orange",
+};
+
+drawStackedBarChart(params);        
 
 function drawStackedBarChart(parameters) {
     
@@ -21,6 +41,12 @@ function drawStackedBarChart(parameters) {
     var categoryLabels = parameters.categoryLabels;
     var highlightColor = parameters.highlightColor;
     
+//    startColor = d3.hsl(startColor);
+//    endColor = d3.hsl(startColor);
+//    endColor.h = (parseFloat(startColor.h) + 180)%360 + "";
+//    console.log(d3.rgb(startColor));
+//    console.log(d3.rgb(endColor));
+    
     d3.csv(dataFileName).then(function (data) {
         
         var columns = data.columns;
@@ -32,6 +58,9 @@ function drawStackedBarChart(parameters) {
         }
         
         var categories = columns.slice(1);
+        
+        var legendCellHeight = 30;
+        var legendCellWidth = Math.floor((width-margin.left/4)/categories.length);
         
         var stack = d3.stack().keys(categories);
         
@@ -91,7 +120,7 @@ function drawStackedBarChart(parameters) {
         });
         
         var xScale = d3.scaleBand()
-				.domain(d3.range(dataset.length))
+				//.domain(d3.range(dataset.length))
 				.range([0, width])
 				.paddingInner(0.1).align(0.1);
         
@@ -101,20 +130,53 @@ function drawStackedBarChart(parameters) {
                 })])
 				.range([height, 0]);
         
-        dataset.sort(function (a,b) {return b.total - a.total; }); // Sorting the data from highest to lowest
+        dataset.sort(function (a,b) {return a.total - b.total; }); // Sorting the data   
         
         var stackedData = stack(dataset);
         
-        var stackGroups = svg.selectAll("g")
+        // Adding X axis
+        svg.append("g")
+            .attr("class", "axis axis--x")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(xScale.domain(data.map(function (d) { return d[columns[0]]; }))).tickSize(-height)).selectAll(".tick text")
+      .call(wrap, xScale.bandwidth()); // Domain is country labels
+        
+        // Adding Y axis
+        svg.append("g").attr("transform", "translate(" + (width) + "," + 0 + ")")
+            .attr("class", "axis axis--y")
+            .call(d3.axisRight(yScale).ticks(null, "s").tickSize(-width))
+            .append("text")
+            .attr("font-weight", "bold")
+            .attr("text-anchor", "start");
+        
+        var svgLegend = d3.select("#legend");
+        // Legend stuff
+        svgLegend.append("g").attr("class", "legendBarChart").attr("transform", "translate(500,0)");
+        
+        if (parameters.colors){
+            var legendScale = d3.scaleOrdinal().domain(categoryLabels).range(parameters.colors);
+            
+            var legendOrdinal = d3.legendColor().scale(legendScale).shapeWidth(legendCellWidth).shapeHeight(legendCellHeight).shapePadding(0).ascending(false).orient("horizontal").labelWrap(legendCellWidth);
+        
+            svgLegend.select(".legendBarChart")
+                .call(legendOrdinal);
+        }
+        
+        d3.select(".legendBarChart").attr("transform", "translate(" + (margin.left/2 + 10)  +",0)")
+        
+        
+        var stackGroups = svg.selectAll(".group")
 				.data(stackedData)
 				.enter()
-                    .append("g")
+                    .append("g").attr("class", "group")
                     .style("fill", function(d, i) {
                         d3.select(this).attr("category", i);
                         return colors(i);
                     });
-
-        stackGroups.selectAll("rect")
+        
+        xScale.domain(d3.range(dataset.length));
+        
+        stackGroups.selectAll(".bar")
 				.data(function(d) { return d; })
 				.enter()
                     .append("rect")
@@ -135,21 +197,45 @@ function drawStackedBarChart(parameters) {
                         })
                         .attr("width", xScale.bandwidth());
 
-        // Adding X axis
-        svg.append("g")
-            .attr("class", "axis axis--x")
-            .attr("transform", "translate(0," + height + ")")
-            .call(d3.axisBottom(xScale.domain(data.map(function (d) { return d[columns[0]]; })))); // Domain is country labels
-            
-        // Adding Y axis
-        svg.append("g").attr("transform", "translate(" + (- margin.left)/4 + "," + 0 + ")")
-            .attr("class", "axis--y")
-            .call(d3.axisLeft(yScale).ticks(null, "s"))
-            .append("text")
-            .attr("font-weight", "bold")
-            .attr("text-anchor", "start");
-        
         // Adding interactions
+        d3.select(".axis--y")
+            .selectAll(".tick")
+            .style("opacity", 0)
+            .transition()
+            .duration(1000)
+            .delay(function(d,i) {
+                return i*200;
+            })
+            .style("opacity", 1);
+        
+        
+        var x2 = d3.select(".axis--y").select("line").attr("x2");
+        d3.select(".axis--y").selectAll("line").attr("x2",0)
+            .transition()
+            .duration(2000)
+            .delay(function (d, i) { return i*200;})
+            .attr("x2", x2);
+        
+        d3.select(".axis--x")
+            .selectAll(".tick")
+            .style("opacity", 0)
+            .transition()
+            .duration(1000)
+            .delay(function(d,i) {
+                return i*30;
+            })
+            .style("opacity", 1);
+        
+        var y2 = d3.select(".axis--x").select("line").attr("y2");
+        d3.select(".axis--x").selectAll("line").attr("y2",0)
+            .transition()
+            .duration(2000)
+            .delay(function (d, i) {
+                return 100 + i*20;
+            }).attr("y2", y2);
+        
+        
+        
         d3.selectAll(".bar")
             .on("mouseover", function (d) {
                 var categoryNumber = d3.select(this.parentNode).attr("category"); 
@@ -159,8 +245,8 @@ function drawStackedBarChart(parameters) {
                     .duration(500)
                         .style("fill", highlightColor);
                 
-                var xPosition = parseFloat(d3.select(this).attr("x")) + xScale.bandwidth() * 4;
-                var yPosition = parseFloat(d3.select(this).attr("y")) + height / 4;
+                var xPosition = parseFloat(d3.event.x) + 10;
+                var yPosition = parseFloat(d3.event.y);
                 
                 d3.select("#tooltip")
                     .style("left", xPosition + "px")
@@ -189,7 +275,31 @@ function drawStackedBarChart(parameters) {
             
                 d3.select("#tooltip").transition().duration(500).style("opacity", 0);
             });
+        
+        
+        
+        d3.select(".legendBarChart").selectAll("rect")
+            .attr("opacity", 0)
+            .transition().ease(d3.easeLinear)
+            .duration(2000)
+            .delay(function(d,i) {
+                return i*300;
+            })
+           .attr("opacity", 1);
+        
+        d3.select(".legendBarChart").selectAll("text")
+            .style("opacity", 0)
+            .transition().ease(d3.easeLinear)
+            .duration(250)
+            .delay(function(d,i) {
+                return 250 + i*250;
+            })
+            .style("opacity", 1);
+        
+              
     });
+    
+    
 
 }
 
@@ -240,4 +350,28 @@ function padZero(str, len) {
     len = len || 2;
     var zeros = new Array(len).join('0');
     return (zeros + str).slice(-len);
+}
+
+function wrap(text, width) {
+  text.each(function() {
+    var text = d3.select(this),
+        words = text.text().split(/\s+/).reverse(),
+        word,
+        line = [],
+        lineNumber = 0,
+        lineHeight = 1.1, // ems
+        y = text.attr("y"),
+        dy = parseFloat(text.attr("dy")),
+        tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
+    while (word = words.pop()) {
+      line.push(word);
+      tspan.text(line.join(" "));
+      if (tspan.node().getComputedTextLength() > width) {
+        line.pop();
+        tspan.text(line.join(" "));
+        line = [word];
+        tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
+      }
+    }
+  });
 }
