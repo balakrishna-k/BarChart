@@ -8,8 +8,6 @@ var svg = d3.select("#chart");
 var width = +svg.attr("width") - margin.left - margin.right;
 var height = +svg.attr("height") - margin.top - margin.bottom;        
 
-
-
 svg = svg.append("g").attr("transform", "translate(" + margin.left/2 + "," + margin.top + ")");
 
 var params = {
@@ -22,6 +20,9 @@ var params = {
     //endColor: "orange",
     //categoryLabels: ["One", "Two", "Three", "Four", "Five", "Six", "Seven"],
     highlightColor: "orange",
+    sorted: true,
+    legend: {legendCellHeight: 30, },
+    proportions: true,
 };
 
 drawStackedBarChart(params);        
@@ -40,7 +41,9 @@ function drawStackedBarChart(parameters) {
     var endColor = parameters.endColor;
     var categoryLabels = parameters.categoryLabels;
     var highlightColor = parameters.highlightColor;
-    
+    var sorted = parameters.sorted;
+    var proportions = parameters.proportions;
+    var legend = parameters.legend;
 //    startColor = d3.hsl(startColor);
 //    endColor = d3.hsl(startColor);
 //    endColor.h = (parseFloat(startColor.h) + 180)%360 + "";
@@ -58,8 +61,11 @@ function drawStackedBarChart(parameters) {
         }
         
         var categories = columns.slice(1);
-        
         var legendCellHeight = 30;
+        
+        if (legend.legendCellHeight){
+            legendCellHeight = legend.legendCellHeight;
+        }
         var legendCellWidth = Math.floor((width-margin.left/4)/categories.length);
         
         var stack = d3.stack().keys(categories);
@@ -119,6 +125,27 @@ function drawStackedBarChart(parameters) {
             dataset.push(tempObj); 
         });
         
+        if (sorted==true){
+            dataset.sort(function (a,b) {return a.total - b.total; }); // Sorting the data   
+        }
+        
+        if (proportions == true){
+        var dataset1 =[];
+            dataset.forEach(function (datum) {
+                var tempObj = {};
+                var sum = 0;
+                categories.forEach(function (category) {
+                    //console.log(datum.total)
+                    tempObj[category] = 100 * datum[category]/datum.total; 
+                    sum = sum + tempObj[category];
+                });
+                tempObj.total = sum;
+                tempObj.key = datum.key;
+                //console.log(datum);
+                dataset1.push(tempObj)
+            });
+            dataset = dataset1;
+        }
         var xScale = d3.scaleBand()
 				//.domain(d3.range(dataset.length))
 				.range([0, width])
@@ -130,15 +157,13 @@ function drawStackedBarChart(parameters) {
                 })])
 				.range([height, 0]);
         
-        dataset.sort(function (a,b) {return a.total - b.total; }); // Sorting the data   
-        
         var stackedData = stack(dataset);
         
         // Adding X axis
         svg.append("g")
             .attr("class", "axis axis--x")
             .attr("transform", "translate(0," + height + ")")
-            .call(d3.axisBottom(xScale.domain(data.map(function (d) { return d[columns[0]]; }))).tickSize(-height)).selectAll(".tick text")
+            .call(d3.axisBottom(xScale.domain(dataset.map(function (d) { return d.key; }))).tickSize(0)).selectAll(".tick text")
       .call(wrap, xScale.bandwidth()); // Domain is country labels
         
         // Adding Y axis
@@ -171,6 +196,7 @@ function drawStackedBarChart(parameters) {
                     .append("g").attr("class", "group")
                     .style("fill", function(d, i) {
                         d3.select(this).attr("category", i);
+                        d3.select(this).attr("class", "category"+i);
                         return colors(i);
                     });
         
@@ -185,7 +211,7 @@ function drawStackedBarChart(parameters) {
                     .attr("y", height)
                     .attr("height", 0)
                     .attr("opacity", 0)
-                        .transition()
+                        .transition().ease(d3.easeCubicOut)
                         .duration(1800)
                         .delay(function (d,i) {return i*20;})
                         .attr("opacity", 1)
@@ -196,7 +222,7 @@ function drawStackedBarChart(parameters) {
                             return yScale(d[1]);
                         })
                         .attr("width", xScale.bandwidth());
-
+        //xScale.domain(dataset)
         // Adding interactions
         d3.select(".axis--y")
             .selectAll(".tick")
@@ -276,25 +302,51 @@ function drawStackedBarChart(parameters) {
                 d3.select("#tooltip").transition().duration(500).style("opacity", 0);
             });
         
-        
-        
-        d3.select(".legendBarChart").selectAll("rect")
-            .attr("opacity", 0)
+        d3.select(".legendBarChart")
+            .style("opacity", 0)
             .transition().ease(d3.easeLinear)
             .duration(2000)
             .delay(function(d,i) {
-                return i*300;
+                return 2000 + i*300;
             })
-           .attr("opacity", 1);
+           .style("opacity", 1);
         
-        d3.select(".legendBarChart").selectAll("text")
-            .style("opacity", 0)
-            .transition().ease(d3.easeLinear)
-            .duration(250)
-            .delay(function(d,i) {
-                return 250 + i*250;
+        var fill;
+        
+        d3.select(".legendBarChart")
+            .selectAll("rect").attr("class", function (d, i) {return "category"+i;})
+            .on("mouseover", function (d, i) {
+                fill = d3.select(this).style("fill");
+                
+                var categoryClass = d3.select(this).attr("class");
+                
+                d3.selectAll("." + categoryClass).selectAll("rect")
+                    .transition()
+                    .duration(500)
+                    .style("fill", function (d) {return highlightColor;});
+            
+                d3.select(this)
+                    .transition()
+                    .duration(500)
+                    .style("fill", function (d) {return highlightColor;});
+            
             })
-            .style("opacity", 1);
+            .on("mouseout", function (d, i) {
+            
+                var categoryClass = d3.select(this).attr("class");
+                
+                d3.selectAll("." + categoryClass).selectAll("rect")
+                    .transition()
+                    .duration(500)
+                    .style("fill", function (d) {return colors(i);});
+            
+                d3.select(this)
+                    .transition()
+                    .duration(500)
+                    .style("fill", function (d) {return colors(i);});
+            });
+        
+        
         
               
     });
