@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" content="width=device-width, initial-scale=1">
+        <style>
+
+            .axis--x path {
+                display: none;
+                stroke: grey;    
+            }
+            
+            .axis--y path {
+                display: none;
+                stroke: grey; 
+                z-index: 1;
+            }
+            
+            rect{
+                shape-rendering: crispEdges;
+                z-index: 100;
+            }
+            
+            #tooltip {
+                position: absolute;
+                width: auto;
+                height: auto;
+                padding: 10px;
+                background-color: white;
+                -webkit-border-radius: 10px;
+                -moz-border-radius: 10px;
+                border-radius: 10px;
+                -webkit-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+                -moz-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+                box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+                pointer-events: none;
+            }
+
+            #tooltip p {
+                margin: 0;
+                font-family: Futura;
+                font-size: 16px;
+                line-height: 20px;
+            }
+            
+            #tooltip h1 {
+                text-align:  center;
+                margin: 0;
+                font-family: Futura;
+                font-size: 20px;
+                line-height: 20px;
+            }
+            
+            .label {
+                font-family: Futura;
+                fill: black;
+            }
+            
+            .axis path,
+            .axis line {
+                fill: none;
+                stroke: #ddd;
+                z-index: -99;
+            }
+            
+
+        </style>
+    </head>
+    <body>
+        <h2>Bar Chart with Arbitrary Data</h2>
+        <div id="tooltip" style="opacity: 0;">
+            <h1><span id="title"></span></h1>
+            <hr>
+            <p><strong><span id="category"></span></strong></p>
+            <p><span id="value"></span></p>
+            <br>
+            <p><strong><span>Total</span></strong></p>
+            <p><span id="totalValue"></span></p>
+        </div>
+        <svg id="chart" width="1060" height="500"></svg>
+        <svg id="legend" width="1060" height="300"></svg>
+        <!--div class="button">
+            <button class="sort-toggle">Toggle Sort</button>
+        </div-->
+        
+        
+        <script src="https://d3js.org/d3.v5.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.js"></script>
+        <script src ="stackedBarChart.js"></script>
+        
+        <script>
+            
+        </script>
+    </body>    
+</html>
